@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICT Career Guide – ICT Career List</title>
+  <link href="Stylesheet.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+
+  <header>
+    <h1>ICT <span>Career Guide</span></h1>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="About.html">Home</a></li>
+      <li><a href="Content.html" class="active">ICT Career List</a></li>
+      <li><a href="index.html">Education &amp; Training</a></li>
+      <li><a href="Gallery.html">Career Advice</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="container" style="max-width:1100px;">
+
+      <div class="hero-banner">
+        <h1>ICT Career Articles</h1>
+        <p>Real articles fetched live from Dev.to — a global developer community</p>
+      </div>
+
+      <div class="api-banner">
+        <span class="api-badge">Live REST API</span>
+        <span class="api-url" id="displayUrl">https://dev.to/api/articles?tag=career&per_page=9</span>
+        <span class="api-status loading" id="apiStatus">⏳ Connecting...</span>
+      </div>
+
+      <div class="api-meta">
+        <span>🌐 <strong>Dev.to (Forem API)</strong></span>
+        <span>📦 Format: <strong>JSON</strong></span>
+        <span>🕒 Fetched: <strong id="fetchTime">—</strong></span>
+        <span>📄 Count: <strong id="recordCount">—</strong></span>
+        <span>⚡ Speed: <strong id="fetchSpeed">—</strong></span>
+      </div>
+
+      <div class="filter-bar">
+        <button class="tag-btn active" data-tag="career"        onclick="loadArticles('career', this)">💼 Career</button>
+        <button class="tag-btn"        data-tag="programming"   onclick="loadArticles('programming', this)">💻 Programming</button>
+        <button class="tag-btn"        data-tag="cybersecurity" onclick="loadArticles('cybersecurity', this)">🔒 Cybersecurity</button>
+        <button class="tag-btn"        data-tag="networking"    onclick="loadArticles('networking', this)">🌐 Networking</button>
+        <button class="tag-btn"        data-tag="cloud"         onclick="loadArticles('cloud', this)">☁️ Cloud</button>
+        <button class="tag-btn"        data-tag="ai"            onclick="loadArticles('ai', this)">🤖 AI</button>
+      </div>
+
+      <div id="articles-container">
+        <div class="state-msg">
+          <div class="spinner"></div>
+          <p>Fetching live articles from Dev.to...</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <h3>Contact &amp; Enquiries</h3>
+      <p><i class="fas fa-envelope"></i> info@ictguide.com</p>
+      <p><i class="fas fa-phone"></i>  063 352 4085 </p>
+      <p><i class="fas fa-location-dot"></i> South Africa</p>
+      <div class="footer-links">
+        <a href="https://wa.me/27821234567" target="_blank"><button><i class="fab fa-whatsapp"></i> WhatsApp</button></a>
+        <a href="https://www.linkedin.com/in/ict-career-guide-231816402/" target="_blank"><button><i class="fab fa-linkedin"></i> LinkedIn</button></a>
+        <a href="https://www.facebook.com/profile.php?id=61574392666773" target="_blank"><button><i class="fab fa-facebook"></i> Facebook</button></a>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 ICT Career Guide | All Rights Reserved</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const BASE_URL = 'https://dev.to/api/articles';
+
+    async function loadArticles(tag, btnEl) {
+      document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      const apiUrl      = `${BASE_URL}?tag=${tag}&per_page=9`;
+      const container   = document.getElementById('articles-container');
+      const statusBadge = document.getElementById('apiStatus');
+      const fetchTime   = document.getElementById('fetchTime');
+      const recordCount = document.getElementById('recordCount');
+      const fetchSpeed  = document.getElementById('fetchSpeed');
+
+      document.getElementById('displayUrl').textContent = apiUrl;
+      statusBadge.className   = 'api-status loading';
+      statusBadge.textContent = '⏳ Loading...';
+
+      container.innerHTML = `<div class="state-msg"><div class="spinner"></div><p>Fetching <strong>${tag}</strong> articles...</p></div>`;
+
+      const t0 = performance.now();
+
+      try {
+        const res  = await fetch(apiUrl, { headers: { 'User-Agent': 'ICTCareerGuide/1.0' } });
+        const data = await res.json();
+        const ms   = Math.round(performance.now() - t0);
+
+        statusBadge.className   = 'api-status success';
+        statusBadge.textContent = '✅ Connected';
+        fetchTime.textContent   = new Date().toLocaleTimeString('en-ZA');
+        recordCount.textContent = data.length + ' articles';
+        fetchSpeed.textContent  = ms + 'ms';
+
+        container.innerHTML = '';
+
+        if (!data.length) {
+          container.innerHTML = `<div class="state-msg"><p>No articles found for <strong>${tag}</strong>.</p></div>`;
+          return;
+        }
+
+        data.forEach(article => {
+          const tags  = (article.tag_list || []).slice(0, 3).map(t => `<span class="card-tag">#${t}</span>`).join('');
+          const cover = (article.cover_image || article.social_image)
+            ? `<div class="card-cover"><img src="${article.cover_image || article.social_image}" alt="${article.title}" loading="lazy"></div>`
+            : `<div class="card-cover"><i class="fas fa-newspaper" style="font-size:32px; color:#b0c4de;"></i></div>`;
+          const avatar = article.user?.profile_image_90
+            ? `<img class="author-avatar" src="${article.user.profile_image_90}" alt="${article.user.name}">`
+            : `<div style="width:26px;height:26px;border-radius:50%;background:var(--blue-mid);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;">${(article.user?.name||'?')[0]}</div>`;
+
+          const card = document.createElement('div');
+          card.className = 'article-card';
+          card.innerHTML = `
+            ${cover}
+            <div class="card-body">
+              <div class="card-tags">${tags}</div>
+              <h3>${article.title}</h3>
+              <p>${article.description || 'No description available.'}</p>
+            </div>
+            <div class="card-footer">
+              <div class="author">${avatar}<span>${article.user?.name || 'Unknown'}</span></div>
+              <div class="card-stats">
+                <span>❤️ ${article.public_reactions_count || 0}</span>
+                <span>💬 ${article.comments_count || 0}</span>
+                <span>⏱ ${article.reading_time_minutes || '?'}m</span>
+              </div>
+            </div>
+            <a class="read-btn" href="${article.url}" target="_blank">Read Full Article →</a>`;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        statusBadge.className   = 'api-status error';
+        statusBadge.textContent = '❌ Failed';
+        fetchSpeed.textContent  = Math.round(performance.now() - t0) + 'ms';
+        container.innerHTML = `<div class="state-msg"><p>⚠️ Could not connect to Dev.to API.<br><small>Check your internet connection.</small></p></div>`;
+        console.error('Dev.to API error:', err);
+      }
+    }
+
+    loadArticles('career', document.querySelector('.tag-btn[data-tag="career"]'));
+  </script>
+
+</body>
+</html>
